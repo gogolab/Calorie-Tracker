@@ -1,4 +1,50 @@
-const StorageCtrl = null;
+const StorageCtrl = (function () {
+
+    return {
+        getItemsFromLocalStorage: function () {
+            let items;
+
+            if (localStorage.getItem("items") === null) {
+                items = [];
+            } else {
+                items = JSON.parse(localStorage.getItem("items"));
+            }
+
+            return items;
+        },
+        storeItemStorage: function (item) {
+            let items = StorageCtrl.getItemsFromLocalStorage();
+
+            items.push(item);
+
+            localStorage.setItem("items", JSON.stringify(items));
+        },
+        updateItemStorage: function (updatedItem) {
+            items = this.getItemsFromLocalStorage();
+
+            for (let item of items) {
+                if (item.id === updatedItem.id) {
+                    item.name = updatedItem.name;
+                    item.calories = updatedItem.calories;
+
+                    break;
+                }
+            }
+
+            localStorage.setItem("items", JSON.stringify(items));
+        },
+        deleteItemFromStorage: function (id) {
+            items = this.getItemsFromLocalStorage();
+
+            items = items.filter(item => item.id !== id);
+
+            localStorage.setItem("items", JSON.stringify(items));
+        },
+        clearItemsFromStorage: function () {
+            localStorage.clear();
+        }
+    };
+})();
 
 const ItemCtrl = (function () {
 
@@ -9,11 +55,12 @@ const ItemCtrl = (function () {
     }
 
     const state = {
-        items: [
-            // { id: 0, name: "Salad (a lot)", calories: 1600 },
-            // { id: 1, name: "Paczki", calories: 500 },
-            // { id: 2, name: "Spinach", calories: 450 }
-        ],
+        // items: [
+        //     // { id: 0, name: "Salad (a lot)", calories: 1600 },
+        //     // { id: 1, name: "Paczki", calories: 500 },
+        //     // { id: 2, name: "Spinach", calories: 450 }
+        // ],
+        items: StorageCtrl.getItemsFromLocalStorage(),
         currentItem: null,
         totalCalories: 0
     };
@@ -205,7 +252,7 @@ const UICtrl = (function () {
     };
 })();
 
-const App = (function (ItemCtrl, UICtrl) {
+const App = (function (ItemCtrl, StorageCtrl, UICtrl) {
 
     const loadEventListeners = function () {
         const UISelectors = UICtrl.getSelectors();
@@ -236,6 +283,8 @@ const App = (function (ItemCtrl, UICtrl) {
             const totalCalories = ItemCtrl.getTotalCalories();
 
             UICtrl.showTotalCalories(totalCalories);
+
+            StorageCtrl.storeItemStorage(newItem);
 
             UICtrl.clearInput();
         }
@@ -277,6 +326,8 @@ const App = (function (ItemCtrl, UICtrl) {
 
         UICtrl.clearEditState();
 
+        StorageCtrl.updateItemStorage(updatedItem);
+
         e.preventDefault();
     };
 
@@ -291,6 +342,8 @@ const App = (function (ItemCtrl, UICtrl) {
 
         UICtrl.showTotalCalories(totalCalories);
 
+        StorageCtrl.deleteItemFromStorage(currentItem.id);
+
         UICtrl.clearEditState();
 
         e.preventDefault();
@@ -302,6 +355,8 @@ const App = (function (ItemCtrl, UICtrl) {
         UICtrl.removeItems();
         UICtrl.hidelist();
         UICtrl.showTotalCalories(0);
+
+        StorageCtrl.clearItemsFromStorage();
     };
 
     return {
@@ -323,6 +378,6 @@ const App = (function (ItemCtrl, UICtrl) {
         }
     };
 
-})(ItemCtrl, UICtrl);
+})(ItemCtrl, StorageCtrl, UICtrl);
 
 App.init();
